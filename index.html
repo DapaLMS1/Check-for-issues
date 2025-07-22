@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compromised Items Decision Challenge</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom colors using Tailwind's extend theme */
+        :root {
+            --color-dark-purple: #532A8C;
+            --color-light-purple-grey: #9D8ABB;
+            --color-green: #7ABF49;
+            --color-light-green: #96BF78;
+            --color-light-grey: #F2F2F2;
+            --color-medium-purple: #C3ACE8;
+        }
+
+        .bg-dark-purple { background-color: var(--color-dark-purple); }
+        .text-dark-purple { color: var(--color-dark-purple); }
+        .border-dark-purple { border-color: var(--color-dark-purple); }
+
+        .bg-light-purple-grey { background-color: var(--color-light-purple-grey); }
+        .text-light-purple-grey { color: var(--color-light-purple-grey); }
+
+        .bg-green { background-color: var(--color-green); }
+        .text-green { color: var(--color-green); }
+
+        .bg-light-green { background-color: var(--color-light-green); }
+        .text-light-green { color: var(--color-light-green); }
+
+        .bg-light-grey { background-color: var(--color-light-grey); }
+        .text-light-grey { color: var(--color-light-grey); }
+
+        .bg-medium-purple { background-color: var(--color-medium-purple); }
+        .text-medium-purple { color: var(--color-medium-purple); }
+
+        /* Font family and base font size (approx 13px) */
+        body {
+            font-family: "Inter", sans-serif;
+            font-size: 0.8125rem; /* Approximately 13px */
+        }
+
+        /* Adjusting other font sizes relative to the new base */
+        h1 {
+            font-size: 1.75rem; /* Adjusted for smaller container */
+        }
+
+        h2 {
+            font-size: 1.125rem; /* Adjusted from xl to be smaller */
+        }
+
+        /* Styling for the circular number */
+        .scenario-number-circle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem; /* Slightly smaller for overall reduction */
+            height: 2rem; /* Slightly smaller for overall reduction */
+            border-radius: 9999px; /* Equivalent to rounded-full */
+            background-color: var(--color-dark-purple);
+            color: white;
+            font-weight: bold;
+            font-size: 1rem; /* Adjusted from xl to be smaller */
+            margin-right: 0.75rem; /* Equivalent to mr-3 */
+            flex-shrink: 0; /* Prevent shrinking on smaller screens */
+        }
+
+        /* Drag & Drop Specific Styles */
+        .drag-item {
+            background-color: var(--color-dark-purple);
+            color: white;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        .drag-item:hover {
+            background-color: var(--color-medium-purple);
+        }
+
+        .drag-item:active {
+            cursor: grabbing;
+            transform: scale(1.02);
+        }
+
+        .drop-zone {
+            background-color: var(--color-light-purple-grey);
+            color: var(--color-dark-purple);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            min-height: 5rem; /* Ensure enough space for dropped item */
+            border: 2px dashed transparent;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+            position: relative; /* For positioning dropped item */
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--color-green);
+            background-color: #e0f2e0; /* Lighter green hint */
+        }
+
+        .drop-zone.correct-drop {
+            background-color: var(--color-light-green);
+            border-color: var(--color-dark-purple);
+            color: var(--color-dark-purple); /* Ensure text is readable */
+        }
+
+        .drop-zone.incorrect-drop {
+            background-color: #fbd38d; /* Light orange for incorrect */
+            border-color: #c05621; /* Darker orange border */
+            color: var(--color-dark-purple); /* Ensure text is readable */
+        }
+
+        .dropped-item {
+            background-color: var(--color-dark-purple);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 0.3rem;
+            margin-top: 0.5rem;
+            text-align: center;
+            pointer-events: none; /* Prevent re-dragging after drop */
+        }
+
+        /* Feedback styles */
+        .feedback-text {
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            color: white; /* Text color remains white */
+            background-color: var(--color-dark-purple); /* Dark purple background */
+        }
+
+        .check-button {
+            background-color: var(--color-green);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            margin-top: 1rem;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+        }
+
+        .check-button:hover {
+            background-color: #68a83d; /* Slightly darker green */
+        }
+    </style>
+</head>
+<body class="bg-light-grey min-h-screen p-4 sm:p-6 md:p-8 flex items-center justify-center">
+
+    <div class="max-w-4xl w-full bg-white rounded-lg shadow-xl overflow-hidden">
+        <header class="bg-dark-purple p-4 rounded-t-lg">
+            <h1 class="font-bold text-white text-center">Compromised Items Decision Challenge</h1>
+        </header>
+
+        <main class="p-4">
+            <div id="start-screen" class="text-center">
+                <p class="mb-4 text-dark-purple">Drag and drop the correct action for each scenario involving compromised items to maintain infection control processes.</p>
+                <button id="start-button" class="check-button">Start Challenge</button>
+            </div>
+
+            <div id="quiz-screen" class="hidden">
+                <div class="text-center text-dark-purple mb-4">
+                    Scenario <span id="current-scenario-progress">1</span> of <span id="total-scenarios-progress">4</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Scenarios (Drop Zones) -->
+                    <div class="md:col-span-1">
+                        <h3 class="font-semibold text-dark-purple mb-2">Scenarios:</h3>
+                        <div id="scenarios-container">
+                            <!-- Scenarios will be dynamically loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Draggable Actions -->
+                    <div class="md:col-span-1">
+                        <h3 class="font-semibold text-dark-purple mb-2">Available Actions:</h3>
+                        <div id="actions-container">
+                            <!-- Actions will be dynamically loaded here -->
+                        </div>
+                        <!-- Overall Feedback Container moved here -->
+                        <div id="overall-feedback-container" class="feedback-text hidden mt-4">
+                            <p id="overall-feedback-text"></p>
+                        </div>
+                        <!-- Play Again button moved here -->
+                        <div class="text-center mt-4">
+                            <button id="restart-button" class="check-button hidden">Play Again</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-6">
+                    <button id="check-answers-button" class="check-button mx-auto">Check Answers</button>
+                </div>
+
+                <p class="text-right mt-4 text-dark-purple">Score: <span id="current-score">0</span> / <span id="total-scenarios"></span></p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const scenarios = [
+                {
+                    id: 'scenario1',
+                    description: "A sterilised pack feels damp after removal from the steriliser, though the external chemical indicator is correct.",
+                    correctActionId: 'actionA',
+                    feedback: "A damp pack indicates a potential breach in sterility due to moisture allowing microbial penetration. It must be immediately isolated and undergo the full reprocessing cycle from cleaning to re-sterilisation."
+                },
+                {
+                    id: 'scenario2',
+                    description: "A sterilisation pouch with a critical instrument has a small tear, despite a correct internal chemical indicator.",
+                    correctActionId: 'actionB',
+                    feedback: "Any breach in the integrity of the sterilisation packaging renders the item non-sterile. It must be isolated and undergo the complete reprocessing cycle."
+                },
+                {
+                    id: 'scenario3',
+                    description: "A biological indicator from yesterday's steriliser load shows spore growth (colour change).",
+                    correctActionId: 'actionC',
+                    feedback: "A failed biological indicator is a serious event. All items from that load are considered non-sterile, must be quarantined, and the incident reported immediately for investigation into the steriliser's function."
+                },
+                {
+                    id: 'scenario4',
+                    description: "A tray of freshly sterilised, unwrapped instruments falls onto the clean area floor.",
+                    correctActionId: 'actionD',
+                    feedback: "Once sterilised items come into contact with an unsterile surface, their sterility is compromised. The entire tray must be treated as non-sterile and undergo the complete reprocessing cycle."
+                }
+            ];
+
+            const actions = [
+                { id: 'actionA', text: "Full Reprocessing of Damp Pack" },
+                { id: 'actionB', text: "Full Reprocessing of Torn Pouch" },
+                { id: 'actionC', text: "Quarantine Load & Investigate Steriliser" },
+                { id: 'actionD', text: "Full Reprocessing of Dropped Tray" }
+            ];
+
+            let score = 0;
+            const droppedAnswers = {}; // To store which action ID is dropped into which scenario ID
+
+            // Get elements
+            const startScreen = document.getElementById('start-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const scenariosContainer = document.getElementById('scenarios-container');
+            const actionsContainer = document.getElementById('actions-container');
+            const checkAnswersButton = document.getElementById('check-answers-button');
+            const overallFeedbackContainer = document.getElementById('overall-feedback-container');
+            const overallFeedbackText = document.getElementById('overall-feedback-text');
+            const currentScoreSpan = document.getElementById('current-score');
+            const totalScenariosSpan = document.getElementById('total-scenarios');
+            const currentScenarioProgressSpan = document.getElementById('current-scenario-progress');
+            const totalScenariosProgressSpan = document.getElementById('total-scenarios-progress');
+            const restartButton = document.getElementById('restart-button'); // Get the restart button
+            const startButton = document.getElementById('start-button'); // Ensure start button is also retrieved within DOMContentLoaded
+
+            // Set total scenarios count for display
+            totalScenariosSpan.textContent = scenarios.length;
+            totalScenariosProgressSpan.textContent = scenarios.length;
+
+            /**
+             * Starts the quiz by hiding the start screen and displaying the drag-and-drop area.
+             */
+            function startGame() {
+                score = 0;
+                // Clear dropped answers and reset styling for all drop zones and actions
+                Object.keys(droppedAnswers).forEach(key => {
+                    const dropZone = document.getElementById(key);
+                    if (dropZone) {
+                        dropZone.classList.remove('correct-drop', 'incorrect-drop');
+                        const droppedItem = dropZone.querySelector('.dropped-item');
+                        if (droppedItem) {
+                            const originalActionId = droppedItem.id.replace('dropped-', '');
+                            const originalActionElement = document.getElementById(originalActionId);
+                            if (originalActionElement) {
+                                originalActionElement.classList.remove('hidden');
+                            }
+                            dropZone.removeChild(droppedItem);
+                        }
+                        const feedbackDiv = document.getElementById(`feedback-${key}`);
+                        if (feedbackDiv) feedbackDiv.classList.add('hidden');
+                    }
+                });
+                Object.keys(droppedAnswers).forEach(key => delete droppedAnswers[key]); // Clear the tracking object
+
+                startScreen.classList.add('hidden');
+                quizScreen.classList.remove('hidden');
+                displayScenariosAndActions(); // Re-render scenarios and actions
+                updateScoreDisplay();
+                overallFeedbackContainer.classList.add('hidden'); // Hide feedback on restart
+                restartButton.classList.add('hidden'); // Hide restart button at the start of a new game
+                checkAnswersButton.classList.remove('hidden'); // Ensure check button is visible
+            }
+
+            /**
+             * Displays all scenarios as drop zones and all actions as draggable items.
+             */
+            function displayScenariosAndActions() {
+                scenariosContainer.innerHTML = ''; // Clear previous scenarios
+                actionsContainer.innerHTML = ''; // Clear previous actions
+
+                scenarios.forEach((scenario, index) => {
+                    const scenarioDiv = document.createElement('div');
+                    scenarioDiv.classList.add('drop-zone', 'rounded-lg', 'shadow-sm', 'relative');
+                    scenarioDiv.id = scenario.id;
+                    scenarioDiv.setAttribute('data-correct-action-id', scenario.correctActionId);
+
+                    // Scenario number and description
+                    const header = document.createElement('h2');
+                    header.classList.add('font-semibold', 'flex', 'items-center', 'mb-2');
+                    const numberCircle = document.createElement('span');
+                    numberCircle.classList.add('scenario-number-circle');
+                    numberCircle.textContent = index + 1;
+                    const descriptionSpan = document.createElement('span');
+                    descriptionSpan.textContent = scenario.description;
+                    header.appendChild(numberCircle);
+                    header.appendChild(descriptionSpan);
+                    scenarioDiv.appendChild(header);
+
+                    // Feedback area for individual scenario
+                    const feedbackDiv = document.createElement('div');
+                    feedbackDiv.classList.add('feedback-text', 'hidden');
+                    feedbackDiv.id = `feedback-${scenario.id}`;
+                    scenarioDiv.appendChild(feedbackDiv);
+
+                    // Drag and drop event listeners
+                    scenarioDiv.addEventListener('dragover', allowDrop);
+                    scenarioDiv.addEventListener('drop', drop);
+                    scenarioDiv.addEventListener('dragleave', dragLeave);
+                    scenarioDiv.addEventListener('dragenter', dragEnter);
+
+                    scenariosContainer.appendChild(scenarioDiv);
+                });
+
+                // Shuffle actions to make it more challenging
+                const shuffledActions = [...actions].sort(() => Math.random() - 0.5);
+
+                shuffledActions.forEach(action => {
+                    const actionDiv = document.createElement('div');
+                    actionDiv.classList.add('drag-item', 'rounded-lg', 'shadow-sm');
+                    actionDiv.id = action.id;
+                    actionDiv.textContent = action.text;
+                    actionDiv.setAttribute('draggable', 'true');
+                    actionDiv.addEventListener('dragstart', drag);
+                    actionsContainer.appendChild(actionDiv);
+                });
+            }
+
+            /**
+             * Handles the drag start event for draggable items.
+             * @param {Event} event The drag event.
+             */
+            function drag(event) {
+                event.dataTransfer.setData("text/plain", event.target.id);
+                // Add a class for visual feedback during drag
+                event.target.classList.add('opacity-50');
+            }
+
+            /**
+             * Handles the drag over event for drop zones. Allows dropping.
+             * @param {Event} event The drag event.
+             */
+            function allowDrop(event) {
+                event.preventDefault();
+                event.target.classList.add('drag-over');
+            }
+
+            /**
+             * Handles the drag enter event for drop zones.
+             * @param {Event} event The drag event.
+             */
+            function dragEnter(event) {
+                event.target.classList.add('drag-over');
+            }
+
+            /**
+             * Handles the drag leave event for drop zones.
+             * @param {Event} event The drag event.
+             */
+            function dragLeave(event) {
+                event.preventDefault(); /* Prevent default to avoid issues when dragging out of the window */
+                event.target.classList.remove('drag-over');
+            }
+
+            /**
+             * Handles the drop event for drop zones.
+             * @param {Event} event The drop event.
+             */
+            function drop(event) {
+                event.preventDefault();
+                event.target.classList.remove('drag-over');
+                const data = event.dataTransfer.getData("text/plain"); // Get the ID of the dragged item
+                const draggedElement = document.getElementById(data);
+                draggedElement.classList.remove('opacity-50'); // Remove opacity from dragged item
+
+                const dropZone = event.target.closest('.drop-zone'); // Ensure we get the drop-zone element
+                if (!dropZone) return;
+
+                // If there's already an item in this drop zone, move it back to actions container
+                const existingDroppedItem = dropZone.querySelector('.dropped-item');
+                if (existingDroppedItem) {
+                    const originalActionId = existingDroppedItem.id.replace('dropped-', '');
+                    const originalActionElement = document.getElementById(originalActionId);
+                    if (originalActionElement) {
+                        originalActionElement.classList.remove('hidden'); // Make it visible again
+                        actionsContainer.appendChild(originalActionElement); // Move it back
+                    }
+                    dropZone.removeChild(existingDroppedItem);
+                    delete droppedAnswers[dropZone.id]; // Remove from tracking
+                }
+
+                // Create a clone of the dragged item to place in the drop zone
+                const droppedClone = draggedElement.cloneNode(true);
+                droppedClone.classList.remove('drag-item'); // Remove drag-item styling
+                droppedClone.classList.add('dropped-item'); // Add dropped-item styling
+                droppedClone.removeAttribute('draggable'); // Make it not draggable after drop
+                droppedClone.removeEventListener('dragstart', drag); // Remove drag listener
+                droppedClone.id = `dropped-${data}`; // Change ID to avoid conflict
+
+                dropZone.appendChild(droppedClone);
+                draggedElement.classList.add('hidden'); // Hide the original draggable item
+
+                // Store the association
+                droppedAnswers[dropZone.id] = data; // Store scenario ID -> action ID
+            }
+
+            /**
+             * Checks all dropped answers and provides feedback.
+             */
+            function checkAnswers() {
+                score = 0;
+                let allAnswered = true;
+                scenarios.forEach(scenario => {
+                    const dropZone = document.getElementById(scenario.id);
+                    const feedbackDiv = document.getElementById(`feedback-${scenario.id}`);
+                    const droppedActionId = droppedAnswers[scenario.id];
+
+                    dropZone.classList.remove('correct-drop', 'incorrect-drop');
+                    feedbackDiv.classList.add('hidden');
+
+                    if (droppedActionId) {
+                        if (droppedActionId === scenario.correctActionId) {
+                            score++;
+                            dropZone.classList.add('correct-drop');
+                            feedbackDiv.textContent = "Correct! " + scenario.feedback;
+                            feedbackDiv.classList.remove('hidden');
+                        } else {
+                            dropZone.classList.add('incorrect-drop');
+                            const correctActionText = actions.find(a => a.id === scenario.correctActionId).text;
+                            feedbackDiv.textContent = "Incorrect. The correct action is: " + correctActionText + ". " + scenario.feedback;
+                            feedbackDiv.classList.remove('hidden');
+                        }
+                    } else {
+                        allAnswered = false;
+                        dropZone.classList.add('incorrect-drop'); // Highlight unanswered as incorrect
+                        feedbackDiv.textContent = "Please drag an action here.";
+                        feedbackDiv.classList.remove('hidden');
+                    }
+                });
+
+                updateScoreDisplay();
+
+                // Show overall feedback based on score
+                overallFeedbackContainer.classList.remove('hidden');
+                let overallMessage = "";
+                if (score === scenarios.length) {
+                    overallMessage = "Correct! Well done! 🎉 You've mastered dealing with compromised items.";
+                } else if (score >= scenarios.length / 2) {
+                    overallMessage = "Good effort! 👍 You're on your way to mastering compromised items. Review the feedback for each scenario.";
+                } else {
+                    overallMessage = "Oh no! 😔 Try again. Review the feedback for each scenario to improve.";
+                }
+                overallFeedbackText.textContent = overallMessage;
+
+                // Show the "Play Again" button after checking answers
+                restartButton.classList.remove('hidden');
+                checkAnswersButton.classList.add('hidden'); // Hide check answers button
+            }
+
+            /**
+             * Updates the displayed score.
+             */
+            function updateScoreDisplay() {
+                currentScoreSpan.textContent = score;
+            }
+
+            // Event Listeners
+            startButton.addEventListener('click', startGame);
+            checkAnswersButton.addEventListener('click', checkAnswers);
+            restartButton.addEventListener('click', startGame); // This button now restarts the game from the beginning
+
+            // Initial state setup
+            startScreen.classList.remove('hidden');
+            quizScreen.classList.add('hidden');
+        }); // End DOMContentLoaded
+    </script>
+</body>
+</html>
