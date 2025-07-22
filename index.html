@@ -127,15 +127,29 @@
             pointer-events: none; /* Prevent re-dragging after drop */
         }
 
-        /* Feedback styles */
+        /* Feedback styles (Individual scenario feedback will be hidden) */
         .feedback-text {
+            /* This class will now always be hidden for individual feedback */
+            display: none;
             padding: 0.75rem;
             margin-top: 0.5rem;
             border-radius: 0.5rem;
             font-weight: bold;
-            color: white; /* Text color remains white */
-            background-color: var(--color-dark-purple); /* Dark purple background */
+            color: white;
+            background-color: var(--color-dark-purple);
         }
+
+        /* Overall feedback container styles */
+        #overall-feedback-container {
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            color: white;
+            background-color: var(--color-dark-purple);
+            /* This will be shown/hidden by JS, so no 'display: none' here */
+        }
+
 
         .check-button {
             background-color: var(--color-green);
@@ -187,7 +201,7 @@
                             <!-- Actions will be dynamically loaded here -->
                         </div>
                         <!-- Overall Feedback Container moved here -->
-                        <div id="overall-feedback-container" class="feedback-text hidden mt-4">
+                        <div id="overall-feedback-container" class="hidden mt-4">
                             <p id="overall-feedback-text"></p>
                         </div>
                         <!-- Play Again button moved here -->
@@ -283,6 +297,7 @@
                             }
                             dropZone.removeChild(droppedItem);
                         }
+                        // Ensure individual feedback is hidden on restart
                         const feedbackDiv = document.getElementById(`feedback-${key}`);
                         if (feedbackDiv) feedbackDiv.classList.add('hidden');
                     }
@@ -293,7 +308,7 @@
                 quizScreen.classList.remove('hidden');
                 displayScenariosAndActions(); // Re-render scenarios and actions
                 updateScoreDisplay();
-                overallFeedbackContainer.classList.add('hidden'); // Hide feedback on restart
+                overallFeedbackContainer.classList.add('hidden'); // Hide overall feedback on restart
                 restartButton.classList.add('hidden'); // Hide restart button at the start of a new game
                 checkAnswersButton.classList.remove('hidden'); // Ensure check button is visible
             }
@@ -323,9 +338,10 @@
                     header.appendChild(descriptionSpan);
                     scenarioDiv.appendChild(header);
 
-                    // Feedback area for individual scenario
+                    // Individual feedback area (will remain hidden)
+                    // The 'feedback-text' class now has 'display: none' in CSS
                     const feedbackDiv = document.createElement('div');
-                    feedbackDiv.classList.add('feedback-text', 'hidden');
+                    feedbackDiv.classList.add('feedback-text'); // No 'hidden' class here, relies on CSS
                     feedbackDiv.id = `feedback-${scenario.id}`;
                     scenarioDiv.appendChild(feedbackDiv);
 
@@ -408,8 +424,7 @@
                     const originalActionId = existingDroppedItem.id.replace('dropped-', '');
                     const originalActionElement = document.getElementById(originalActionId);
                     if (originalActionElement) {
-                        originalActionElement.classList.remove('hidden'); // Make it visible again
-                        actionsContainer.appendChild(originalActionElement); // Move it back
+                        originalActionElement.classList.remove('hidden');
                     }
                     dropZone.removeChild(existingDroppedItem);
                     delete droppedAnswers[dropZone.id]; // Remove from tracking
@@ -438,29 +453,21 @@
                 let allAnswered = true;
                 scenarios.forEach(scenario => {
                     const dropZone = document.getElementById(scenario.id);
-                    const feedbackDiv = document.getElementById(`feedback-${scenario.id}`);
+                    // No individual feedback is displayed, so no need to touch feedbackDiv here
                     const droppedActionId = droppedAnswers[scenario.id];
 
                     dropZone.classList.remove('correct-drop', 'incorrect-drop');
-                    feedbackDiv.classList.add('hidden');
 
                     if (droppedActionId) {
                         if (droppedActionId === scenario.correctActionId) {
                             score++;
                             dropZone.classList.add('correct-drop');
-                            feedbackDiv.textContent = "Correct! " + scenario.feedback;
-                            feedbackDiv.classList.remove('hidden');
                         } else {
                             dropZone.classList.add('incorrect-drop');
-                            const correctActionText = actions.find(a => a.id === scenario.correctActionId).text;
-                            feedbackDiv.textContent = "Incorrect. The correct action is: " + correctActionText + ". " + scenario.feedback;
-                            feedbackDiv.classList.remove('hidden');
                         }
                     } else {
                         allAnswered = false;
                         dropZone.classList.add('incorrect-drop'); // Highlight unanswered as incorrect
-                        feedbackDiv.textContent = "Please drag an action here.";
-                        feedbackDiv.classList.remove('hidden');
                     }
                 });
 
@@ -470,11 +477,11 @@
                 overallFeedbackContainer.classList.remove('hidden');
                 let overallMessage = "";
                 if (score === scenarios.length) {
-                    overallMessage = "Correct! Well done! 🎉 You've mastered dealing with compromised items.";
-                } else if (score >= scenarios.length / 2) {
-                    overallMessage = "Good effort! 👍 You're on your way to mastering compromised items. Review the feedback for each scenario.";
-                } else {
-                    overallMessage = "Oh no! 😔 Try again. Review the feedback for each scenario to improve.";
+                    overallMessage = "Correct! Well done! 🎉";
+                } else if (score > 0) { // If score is greater than 0 but not all correct
+                    overallMessage = "Good effort, but not quite right. 👍";
+                } else { // If score is 0
+                    overallMessage = "Oh no! 😔 Try again.";
                 }
                 overallFeedbackText.textContent = overallMessage;
 
